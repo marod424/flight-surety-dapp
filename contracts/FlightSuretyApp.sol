@@ -58,7 +58,6 @@ contract FlightSuretyApp {
         return (success, 0);
     }
 
-
    /**
     * @dev Register a future flight for insuring.
     */  
@@ -80,7 +79,6 @@ contract FlightSuretyApp {
     {
         // TODO
     }
-
 
     /**
     * @dev Generate a request for oracles to fetch flight information

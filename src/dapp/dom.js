@@ -1,5 +1,3 @@
-// Source: https://hackernoon.com/how-i-converted-my-react-app-to-vanillajs-and-whether-or-not-it-was-a-terrible-idea-4b14b1b2faff
-
 export default class DOM {
 
     static a = (...args) => DOM.makeElement(`a`, ...args);
@@ -49,7 +47,7 @@ export default class DOM {
     
       Object.keys(styles).forEach((styleName) => {
         if (styleName in el.style) {
-          el.style[styleName] = styles[styleName]; // eslint-disable-line no-param-reassign
+          el.style[styleName] = styles[styleName];
         } else {
           console.warn(`${styleName} is not a valid style for a <${el.tagName.toLowerCase()}>`);
         }
@@ -85,5 +83,5 @@ export default class DOM {
     
       return el;
     }
-  }
+}
     
