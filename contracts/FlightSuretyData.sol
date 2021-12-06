@@ -8,6 +8,8 @@ contract FlightSuretyData {
 
     address private contractOwner;
     bool private operational = true;
+    mapping(address => uint256) private authorizedContracts;
+    mapping(address => bool) private registeredAirlines;
 
     /**
     * @dev Constructor
@@ -51,12 +53,28 @@ contract FlightSuretyData {
         operational = mode;
     }
 
+    /**
+    * @dev Sets contractAddress as an authorized calling contract
+    */
+    function authorizeContract(address contractAddress) external requireContractOwner {
+        authorizedContracts[contractAddress] = 1;
+    }
+
+    /**
+    * @dev Get operating status of contract
+    *
+    * @return A bool that indicates if an airline is registered
+    */      
+    function isAirline(address airline) public view returns(bool) {
+        return registeredAirlines[airline];
+    }
+
    /**
     * @dev Add an airline to the registration queue
     *      Can only be called from FlightSuretyApp contract
     */   
-    function registerAirline() external pure {
-        // TODO
+    function registerAirline(address airline) external requireContractOwner {
+        registeredAirlines[airline] = true;
     }
 
    /**

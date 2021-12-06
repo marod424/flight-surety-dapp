@@ -5,7 +5,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     before('setup contract', async () => {
         config = await Config(accounts);
-        await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
+        await config.flightSuretyData.authorizeContract(config.flightSuretyApp.address);
     });
 
     it(`(multiparty) has correct initial isOperational() value`, async function () {
