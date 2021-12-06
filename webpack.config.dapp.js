@@ -3,6 +3,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
   entry: ['babel-polyfill', path.join(__dirname, "src/dapp")],
+  devtool: 'eval-source-map',
   output: {
     path: path.join(__dirname, "prod/dapp"),
     filename: "bundle.js"
