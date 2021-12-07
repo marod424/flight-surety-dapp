@@ -60,8 +60,8 @@ contract FlightSuretyData {
    /**
     * @dev Buy insurance for a flight
     */   
-    function buy() external payable {
-        // TODO
+    function buy(address airline, string calldata flight, uint256 timestamp) external payable {
+        // registeredAirlines[airline];
     }
 
     /**

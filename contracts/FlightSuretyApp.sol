@@ -16,7 +16,7 @@ contract FlightSuretyApp {
 
     address private contractOwner;
     
-    IFlightSuretyData iFlightSuretyData;
+    IFlightSuretyData flightSuretyDataProxy;
 
     struct Flight {
         bool isRegistered;
@@ -29,15 +29,19 @@ contract FlightSuretyApp {
 
     constructor(address dataContract) {
         contractOwner = msg.sender;
-        iFlightSuretyData = IFlightSuretyData(dataContract);
+        flightSuretyDataProxy = IFlightSuretyData(dataContract);
     }
 
     function isOperational() external view returns(bool) {
-        return iFlightSuretyData.isOperational();
+        return flightSuretyDataProxy.isOperational();
     }
 
     function setOperatingStatus(bool mode) external {
-        iFlightSuretyData.setOperatingStatus(mode);
+        flightSuretyDataProxy.setOperatingStatus(mode);
+    }
+
+    function buyInsurance(address airline, string calldata flight, uint256 timestamp) external {
+        flightSuretyDataProxy.buy(airline, flight, timestamp);
     }
  
    /**

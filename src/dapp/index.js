@@ -15,7 +15,20 @@ import './flightsurety.css';
             }]);
         });
     
-        DOM.elid('submit-oracle').addEventListener('click', () => {
+        
+        DOM.elid('purchase-insurance').addEventListener('click', () => {
+            const flight = DOM.elid('flight-number').value;
+
+            contract.purchaseFlightInsurance(flight, (error, result) => {
+                display('Insurance', 'TODO: buy', [{ 
+                    label: 'Bought', 
+                    error, 
+                    value: result.flight + ' ' + result.timestamp 
+                }]);
+            });
+        });
+
+        DOM.elid('fetch-status').addEventListener('click', () => {
             const flight = DOM.elid('flight-number').value;
 
             contract.fetchFlightStatus(flight, (error, result) => {
@@ -25,7 +38,7 @@ import './flightsurety.css';
                     value: result.flight + ' ' + result.timestamp 
                 }]);
             });
-        })
+        });
     });
 })();
 
