@@ -11,8 +11,9 @@ contract FlightSuretyData {
     mapping(address => bool) private registeredAirlines;
     mapping(address => uint256) private authorizedContracts;
 
-    constructor() {
+    constructor(address firstAirline) {
         contractOwner = msg.sender;
+        registeredAirlines[firstAirline] = true;
     }
 
     modifier requireIsOperational() {
