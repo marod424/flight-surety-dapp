@@ -8,12 +8,28 @@ contract FlightSuretyData {
 
     address private contractOwner;
     bool private operational = true;
-    mapping(address => bool) private registeredAirlines;
+    uint256 private isOperationalVoteCount = 0;
     mapping(address => uint256) private authorizedContracts;
 
-    constructor(address firstAirline) {
+    struct Airline {
+        address addr;
+        string name;
+        bool isFunded;
+        bool isRegistered;
+        bool isOperationalDuplicateVote;
+        bool registerAirlineDuplicateVote;
+    }
+
+    uint256 private registerAirlineVoteCount = 0;
+    uint256 private multiPartyAirlineMinimum = 4;
+    address[] private fundedAirlines = new address[](0);
+    mapping(address => Airline) private airlines;
+    mapping(address => uint256) private funds;
+
+
+    constructor(address _address) {
         contractOwner = msg.sender;
-        registeredAirlines[firstAirline] = true;
+        _registerAirline(_address, "AirOne", msg.sender);
     }
 
     modifier requireIsOperational() {
@@ -25,44 +41,95 @@ contract FlightSuretyData {
         require(msg.sender == contractOwner, "Caller is not contract owner");
         _;
     }
-    
-    function isOperational() public view returns(bool) {
-        return operational;
+
+    modifier requireRegisteredAirline() {
+        require(airlines[msg.sender].isRegistered, "Caller is not a registered airline");
+        _;
     }
 
-    function setOperatingStatus(bool mode) external requireContractOwner {
-        operational = mode;
+    modifier requireFundedAirline() {
+        require(airlines[msg.sender].isFunded, "Caller is not a funded airline");
+        _;
     }
 
-    /**
-    * @dev Sets contractAddress as an authorized calling contract
-    */
     function authorizeContract(address contractAddress) external requireContractOwner {
         authorizedContracts[contractAddress] = 1;
     }
-
-    /**
-    * @dev Get operating status of contract
-    *
-    * @return A bool that indicates if an airline is registered
-    */      
-    function isAirline(address airline) public view returns(bool) {
-        return registeredAirlines[airline];
+    
+    function isOperational() external view returns(bool) {
+        return operational;
     }
 
-   /**
-    * @dev Add an airline to the registration queue
-    *      Can only be called from FlightSuretyApp contract
-    */   
-    function registerAirline(address airline) external requireContractOwner {
-        registeredAirlines[airline] = true;
+    function setOperatingStatus(bool mode) 
+        external 
+        requireRegisteredAirline 
+        requireFundedAirline 
+    {
+        require(mode != operational, "New mode must be different from existing mode");
+        require(!airlines[msg.sender].isOperationalDuplicateVote, "Caller already voted");
+
+        isOperationalVoteCount = isOperationalVoteCount.add(1);
+
+        if (isOperationalVoteCount >= fundedAirlines.length.div(2)) {
+            operational = mode;
+            isOperationalVoteCount = 0;
+        }
+    }
+
+    function registerAirline(address _address, string calldata _name) 
+        external 
+        requireIsOperational
+        requireRegisteredAirline
+        requireFundedAirline
+    {
+        require(!airlines[_address].isRegistered, "Airline is already registered");
+        require(!airlines[msg.sender].registerAirlineDuplicateVote, "Caller already voted");
+
+        if (fundedAirlines.length < multiPartyAirlineMinimum) {
+            _registerAirline(_address, _name, contractOwner);
+        } else {
+            registerAirlineVoteCount = registerAirlineVoteCount.add(1);
+
+            if (registerAirlineVoteCount >= fundedAirlines.length.div(2)) {
+                _registerAirline(_address, _name, contractOwner);
+                registerAirlineVoteCount = 0;
+            }
+        }
+    }
+
+    function _registerAirline(address _address, string memory _name, address _sender) private {
+        require(_sender == contractOwner, "Caller is not contract owner");
+
+        airlines[_address] = Airline({
+            addr: _address,
+            name: _name,
+            isFunded: false,
+            isRegistered: true,
+            isOperationalDuplicateVote: false,
+            registerAirlineDuplicateVote: false
+        });
+    }
+
+    function fundAirline(address _address) 
+        external 
+        payable 
+        requireIsOperational   
+        requireRegisteredAirline
+    {
+        require(msg.value >= 10, "Required minimum amount is 10 ETH");
+        require(!airlines[msg.sender].isFunded, "Airline is already funded");
+
+        fund(_address);
+    
+        airlines[_address].isFunded = true;
+        fundedAirlines.push(_address);
     }
 
    /**
     * @dev Buy insurance for a flight
     */   
     function buy(address airline, string calldata flight, uint256 timestamp) external payable {
-        // registeredAirlines[airline];
+        // TODO
     }
 
     /**
@@ -79,34 +146,20 @@ contract FlightSuretyData {
         // TODO
     }
 
-   /**
-    * @dev Initial funding for the insurance. Unless there are too many delayed flights
-    *      resulting in insurance payouts, the contract should be self-sustaining
-    */   
-    function fund() public payable {
-        // TODO
+    function fund(address owner) public payable {
+        uint256 currentFunds = funds[owner];
+        uint256 totalFunds = currentFunds.add(msg.value);
+
+        funds[owner] = totalFunds;
     }
 
-    function getFlightKey(address airline, string memory flight, uint256 timestamp)
-        pure
-        internal
-        returns(bytes32) 
-    {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
-    }
-
-    /**
-    * @dev Fallback function for funding smart contract.
-    */
     fallback() external payable {
-        fund();
+        fund(msg.sender);
     }
 
-    /**
-    * @dev Receive function for funding smart contract.
-    */
+
     receive() external payable {
-        fund();
+        fund(msg.sender);
     }
 }
 
