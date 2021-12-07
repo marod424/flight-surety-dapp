@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./IFlightSuretyData.sol";
 
 contract FlightSuretyApp {
     using SafeMath for uint256;
@@ -14,6 +15,8 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
     address private contractOwner;
+    
+    IFlightSuretyData iFlightSuretyData;
 
     struct Flight {
         bool isRegistered;
@@ -24,30 +27,17 @@ contract FlightSuretyApp {
 
     mapping(bytes32 => Flight) private flights;
 
-    /**
-    * @dev Modifier that requires the "operational" boolean variable to be "true"
-    *      This is used on all state changing functions to pause the contract in 
-    *      the event there is an issue that needs to be fixed
-    */
-    modifier requireIsOperational() {
-        require(true, "Contract is currently not operational");  
-        _;
-    }
-
-    /**
-    * @dev Modifier that requires the "ContractOwner" account to be the function caller
-    */
-    modifier requireContractOwner() {
-        require(msg.sender == contractOwner, "Caller is not contract owner");
-        _;
-    }
-
-    constructor() {
+    constructor(address dataContract) {
         contractOwner = msg.sender;
+        iFlightSuretyData = IFlightSuretyData(dataContract);
     }
 
-    function isOperational() public pure returns(bool) {
-        return true;
+    function isOperational() external view returns(bool) {
+        return iFlightSuretyData.isOperational();
+    }
+
+    function setOperatingStatus(bool mode) external {
+        iFlightSuretyData.setOperatingStatus(mode);
     }
  
    /**

@@ -9,7 +9,7 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
     it(`(multiparty) has correct initial isOperational() value`, async function () {
-        const status = await config.flightSuretyData.isOperational.call();
+        const status = await config.flightSuretyApp.isOperational.call();
         assert.equal(status, true, "Incorrect initial operating status value");
     });
 
@@ -17,7 +17,7 @@ contract('Flight Surety Tests', async (accounts) => {
         let accessDenied = false;
 
         try {
-            await config.flightSuretyData.setOperatingStatus(false, { from: config.testAddresses[2] });
+            await config.flightSuretyApp.setOperatingStatus(false, { from: config.testAddresses[2] });
         }
         catch(e) {
             accessDenied = true;
