@@ -10,6 +10,7 @@ contract FlightSuretyData {
     bool private operational = true;
     uint256 private isOperationalVoteCount = 0;
     mapping(address => uint256) private authorizedContracts;
+    bool private testingMode = false;
 
     struct Airline {
         address addr;
@@ -25,7 +26,6 @@ contract FlightSuretyData {
     address[] private fundedAirlines = new address[](0);
     mapping(address => Airline) private airlines;
     mapping(address => uint256) private funds;
-
 
     constructor(address _address) {
         contractOwner = msg.sender;
@@ -60,18 +60,31 @@ contract FlightSuretyData {
         return operational;
     }
 
-    function setOperatingStatus(bool mode) 
+    function isRegisteredAirline(address _address) external view returns(bool) {
+        return airlines[_address].isRegistered;
+    }
+
+    function isFundedAirline(address _address) external view returns(bool) {
+        return airlines[_address].isFunded;
+    }
+
+    function setTestingMode(bool mode) external requireContractOwner {
+        require(mode != testingMode, "New mode must be different from existing mode");
+        testingMode = mode;
+    }
+
+    function setOperatingStatus(bool status) 
         external 
         requireRegisteredAirline 
         requireFundedAirline 
     {
-        require(mode != operational, "New mode must be different from existing mode");
+        require(status != operational, "New status must be different from existing status");
         require(!airlines[msg.sender].isOperationalDuplicateVote, "Caller already voted");
 
         isOperationalVoteCount = isOperationalVoteCount.add(1);
 
         if (isOperationalVoteCount >= fundedAirlines.length.div(2)) {
-            operational = mode;
+            operational = status;
             isOperationalVoteCount = 0;
         }
     }
@@ -116,10 +129,14 @@ contract FlightSuretyData {
         requireIsOperational   
         requireRegisteredAirline
     {
-        require(msg.value >= 10, "Required minimum amount is 10 ETH");
-        require(!airlines[msg.sender].isFunded, "Airline is already funded");
+        require(msg.value >= 10 ether, "Required minimum amount is 10 ETH");
+        require(!airlines[_address].isFunded, "Airline is already funded");
 
-        fund(_address);
+        if (!testingMode) {
+            fund(_address);
+        } else {
+            payable(msg.sender).transfer(msg.value);
+        }
     
         airlines[_address].isFunded = true;
         fundedAirlines.push(_address);
