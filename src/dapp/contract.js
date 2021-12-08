@@ -13,6 +13,7 @@ export default class Contract {
         this.owner = null;
         this.airlines = [];
         this.passengers = [];
+        this.flights = [];
     }
 
     initialize(callback) {
@@ -28,6 +29,63 @@ export default class Contract {
             while (this.passengers.length < 5) {
                 this.passengers.push(accts[counter++]);
             }
+
+            this.flights = [
+                { 
+                    status: 0,
+                    number: 'A10001', 
+                    timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
+                    airline: { name: 'AirOne', address: this.airlines[1] }
+                },
+                { 
+                    status: 0,
+                    number: 'A10002', 
+                    timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
+                    airline: { name: 'AirOne', address: this.airlines[1] }
+                },
+                { 
+                    status: 0,
+                    number: 'A10003', 
+                    timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
+                    airline: { name: 'AirOne', address: this.airlines[1] }
+                },
+                { 
+                    status: 0,
+                    number: 'dA0001', 
+                    timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
+                    airline: { name: 'dAirline', address: this.airlines[2] }
+                },
+                { 
+                    status: 0,
+                    number: 'dA0020', 
+                    timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
+                    airline: { name: 'dAirline', address: this.airlines[2] }
+                },
+                { 
+                    status: 0,
+                    number: 'dA0300', 
+                    timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
+                    airline: { name: 'dAirline', address: this.airlines[2] }
+                },
+                { 
+                    status: 0,
+                    number: 'DAO001', 
+                    timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
+                    airline: { name: 'DAirlineO', address: this.airlines[3] }
+                },
+                { 
+                    status: 0,
+                    number: 'DAO010', 
+                    timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
+                    airline: { name: 'DAirlineO', address: this.airlines[3] }
+                },
+                { 
+                    status: 0,
+                    number: 'DAO011', 
+                    timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
+                    airline: { name: 'DAirlineO', address: this.airlines[3] }
+                },
+            ];
 
             callback();
         });
@@ -66,4 +124,8 @@ export default class Contract {
             .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
             .send({ from: self.owner}, error => callback(error, payload));
     }
+
+    _randomDate(start, end) {
+        return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+    } 
 }

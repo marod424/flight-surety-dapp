@@ -25,11 +25,17 @@
 
     <main class="container">
         <div id="display-wrapper" class="top-20"></div>
-        <div class="row top-20">
+        <div id="airline-wrapper" class="top-20"></div>
+        <div id="flight-form" class="row top-20">
             <label class="form">Flight</label> 
-            <input type="text" id="flight-number"> 
+            <select name="flights" id="flight-number"></select>
             <button class="btn btn-primary" id="purchase-insurance">Purchase Insurance</button>
             <button class="btn btn-primary" id="fetch-status">Fetch Status</button>
+        </div>
+        <hr>
+        <div id="history-wrapper" class="top-20">
+            <h2>Passenger History</h2>
+            <hr>
         </div>
     </main>
 </body>

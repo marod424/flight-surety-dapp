@@ -81,7 +81,7 @@ Deploy the contents of the ./dapp folder
 
 ### Oracles
 
-* Oracle functionality is implementd in the server
+* Oracle functionality is implemented in the server
 * Upon startup, 20+ oracles are registered and their assigned indexes are persisted in memory
 * Update flight status requests from client Dapp result in OracleRequest event emitted by smart contract that is captured by server (displays in console and handled in code)
 * Server Functionality
