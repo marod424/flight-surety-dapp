@@ -18,7 +18,7 @@ contract('FlightSuretyData Tests', async (accounts) => {
 
         describe('setOperatingStatus()', async () => {
             it('requires registered airline caller', async () => {
-                let reason = "";
+                let reason = '';
 
                 try {
                     await contract.setOperatingStatus(false);
@@ -31,7 +31,7 @@ contract('FlightSuretyData Tests', async (accounts) => {
             });
 
             it('requires funded airline caller', async () => {
-                let reason = "";
+                let reason = '';
 
                 try {
                     await contract.setOperatingStatus(false, {from: config.firstAirline});
@@ -44,16 +44,16 @@ contract('FlightSuretyData Tests', async (accounts) => {
             });
 
             it('requires new status to be different from existing status', async () => {
-                let reason = "";
+                let reason = '';
                 
+                const status = await contract.isOperational();
+                
+                await contract.fundAirline(config.firstAirline, {
+                    from: config.firstAirline, 
+                    value: 10 * config.weiMultiple
+                });
+
                 try {
-                    const status = await contract.isOperational();
-                    
-                    await contract.fundAirline(config.firstAirline, {
-                        from: config.firstAirline, 
-                        value: 10 * config.weiMultiple
-                    });
-                    
                     await contract.setOperatingStatus(status, {from: config.firstAirline});
                 } 
                 catch(error) {
@@ -80,15 +80,16 @@ contract('FlightSuretyData Tests', async (accounts) => {
     describe('Airline functionality', async () => {
         describe('registerAirline()', async () => {
             it('requires contract is operational', async () => {
-                let reason = "";
+                let reason = '';
+
+                await contract.fundAirline(config.firstAirline, {
+                    from: config.firstAirline, 
+                    value: 10 * config.weiMultiple
+                });
+
+                await contract.setOperatingStatus(false, {from: config.firstAirline});
 
                 try {
-                    await contract.fundAirline(config.firstAirline, {
-                        from: config.firstAirline, 
-                        value: 10 * config.weiMultiple
-                    });
-
-                    await contract.setOperatingStatus(false, {from: config.firstAirline});
                     await contract.registerAirline(accounts[2], 'dAirline');
                 } 
                 catch(error) {
@@ -99,7 +100,7 @@ contract('FlightSuretyData Tests', async (accounts) => {
             });
 
             it('requires registered airline caller', async () => {
-                let reason = "";
+                let reason = '';
 
                 try {
                     await contract.registerAirline(accounts[2], 'dAirline');
@@ -112,7 +113,7 @@ contract('FlightSuretyData Tests', async (accounts) => {
             });
 
             it('requires funded airline caller', async () => {
-                let reason = "";
+                let reason = '';
 
                 try {
                     await contract.registerAirline(accounts[2], 'dAirline', {from: config.firstAirline});
@@ -125,13 +126,14 @@ contract('FlightSuretyData Tests', async (accounts) => {
             });
 
             it('requires target airline is not already registered', async () => {
-                let reason = "";
+                let reason = '';
+
+                await contract.fundAirline(config.firstAirline, {
+                    from: config.firstAirline, 
+                    value: 10 * config.weiMultiple
+                });
 
                 try {
-                    await contract.fundAirline(config.firstAirline, {
-                        from: config.firstAirline, 
-                        value: 10 * config.weiMultiple
-                    });
 
                     await contract.registerAirline(config.firstAirline, 'dAirline', {from: config.firstAirline});
                 } 
@@ -159,15 +161,16 @@ contract('FlightSuretyData Tests', async (accounts) => {
 
         describe('fundAirline()', async () => {
             it('requires contract is operational', async () => {
-                let reason = "";
+                let reason = '';
+
+                await contract.fundAirline(config.firstAirline, {
+                    from: config.firstAirline, 
+                    value: 10 * config.weiMultiple
+                });
+
+                await contract.setOperatingStatus(false, {from: config.firstAirline});
 
                 try {
-                    await contract.fundAirline(config.firstAirline, {
-                        from: config.firstAirline, 
-                        value: 10 * config.weiMultiple
-                    });
-
-                    await contract.setOperatingStatus(false, {from: config.firstAirline});
                     await contract.fundAirline(config.firstAirline, {from: config.firstAirline});
                 } 
                 catch(error) {
@@ -178,7 +181,7 @@ contract('FlightSuretyData Tests', async (accounts) => {
             });
 
             it('requires registered airline caller', async () => {
-                let reason = "";
+                let reason = '';
 
                 try {
                     await contract.fundAirline(config.firstAirline);
@@ -191,7 +194,7 @@ contract('FlightSuretyData Tests', async (accounts) => {
             });
 
             it('requires minimum value of 10 ETH', async () => {
-                let reason = "";
+                let reason = '';
 
                 try {
                     await contract.fundAirline(config.firstAirline, {from: config.firstAirline});
@@ -204,14 +207,14 @@ contract('FlightSuretyData Tests', async (accounts) => {
             });
 
             it('requires target airline is not already funded', async () => {
-                let reason = "";
+                let reason = '';
+
+                await contract.fundAirline(config.firstAirline, {
+                    from: config.firstAirline, 
+                    value: 10 * config.weiMultiple
+                });
 
                 try {
-                    await contract.fundAirline(config.firstAirline, {
-                        from: config.firstAirline, 
-                        value: 10 * config.weiMultiple
-                    });
-
                     await contract.fundAirline(config.firstAirline, {
                         from: config.firstAirline, 
                         value: 10 * config.weiMultiple
@@ -236,7 +239,82 @@ contract('FlightSuretyData Tests', async (accounts) => {
     });
 
     describe('Multiparty', async () => {
-        it('tests multiple airlines', async () => {
+        beforeEach('Register and fund airlines', async () => {
+            const M = await contract.MULTI_PARTY_AIRLINE_MIN.call();
+
+            await contract.fundAirline(config.firstAirline, {
+                from: config.firstAirline,
+                value: 10 * config.weiMultiple
+            });
+
+            // M = 4
+            // accounts[1] AirOne
+            // i=1, accounts[2] Test Airline 2
+            // i=2, accounts[3] Test Airline 3
+            // i=3, accounts[4] Test Airline 4
+
+            for (let i = 1; i < M; i++) {
+                await contract.registerAirline(accounts[i+1], `Test Airline ${i+1}`, {
+                    from: config.firstAirline
+                });
+
+                await contract.fundAirline(accounts[i+1], {
+                    from: accounts[i+1],
+                    value: 10 * config.weiMultiple
+                });
+            }
+        });
+
+        describe('setOperatingStatus()', async () => {
+            it('blocks duplicate calls by same caller', async () => {
+                let reason = '';
+
+                await contract.setOperatingStatus(false, {from: accounts[2]});
+
+                try {
+                    await contract.setOperatingStatus(false, {from: accounts[2]});
+                }
+                catch(error) {
+                    reason = error.reason;
+                }
+
+                assert.equal(reason, "Caller already voted");
+            });
+
+            it('allows multiparty majority to set status to non operational', async () => {
+                await contract.setOperatingStatus(false, {from: config.firstAirline});
+                await contract.setOperatingStatus(false, {from: accounts[2]});
+
+                const status = await contract.isOperational();
+                assert.equal(status, false, "Incorrect operating status value");
+            });
+        });
+
+        describe('registerAirline()', async () => {
+            it('blocks duplicate calls by same caller', async () => {
+                let reason = '';
+                
+                await contract.registerAirline(accounts[5], '', {from: accounts[2]});
+                
+                try {
+                    await contract.registerAirline(accounts[5], '', {from: accounts[2]});
+                }
+                catch(error) {
+                    reason = error.reason;
+                }
+
+                assert.equal(reason,"Caller already voted");
+            });
+
+            it('allows multiparty majority to register a new airline', async () => {
+                const newAirline = accounts[5];
+
+                await contract.registerAirline(newAirline, '', {from: config.firstAirline});
+                await contract.registerAirline(newAirline, '', {from: accounts[2]});
+
+                const isRegistered = await contract.isRegisteredAirline(newAirline);
+                assert.equal(isRegistered, true, "Incorrect isRegistered value");
+            });
         });
     });
 });

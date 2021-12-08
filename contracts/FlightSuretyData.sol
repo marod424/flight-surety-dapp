@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 contract FlightSuretyData {
     using SafeMath for uint256;
 
+    uint256 constant public MULTI_PARTY_AIRLINE_MIN = 4;
+
     address private contractOwner;
     bool private operational = true;
     uint256 private isOperationalVoteCount = 0;
@@ -22,14 +24,13 @@ contract FlightSuretyData {
     }
 
     uint256 private registerAirlineVoteCount = 0;
-    uint256 private multiPartyAirlineMinimum = 4;
     address[] private fundedAirlines = new address[](0);
     mapping(address => Airline) private airlines;
     mapping(address => uint256) private funds;
 
     constructor(address _address) {
         contractOwner = msg.sender;
-        _registerAirline(_address, "AirOne", msg.sender);
+        _registerAirline(_address, "AirOne");
     }
 
     modifier requireIsOperational() {
@@ -81,11 +82,19 @@ contract FlightSuretyData {
         require(status != operational, "New status must be different from existing status");
         require(!airlines[msg.sender].isOperationalDuplicateVote, "Caller already voted");
 
+        airlines[msg.sender].isOperationalDuplicateVote = true;
         isOperationalVoteCount = isOperationalVoteCount.add(1);
 
         if (isOperationalVoteCount >= fundedAirlines.length.div(2)) {
             operational = status;
             isOperationalVoteCount = 0;
+            _resetIsOperationalDuplicateVotes();
+        }
+    }
+
+    function _resetIsOperationalDuplicateVotes() private {
+        for (uint8 i = 0; i < fundedAirlines.length; i++) {
+            airlines[fundedAirlines[i]].isOperationalDuplicateVote = false;
         }
     }
 
@@ -98,21 +107,21 @@ contract FlightSuretyData {
         require(!airlines[_address].isRegistered, "Airline is already registered");
         require(!airlines[msg.sender].registerAirlineDuplicateVote, "Caller already voted");
 
-        if (fundedAirlines.length < multiPartyAirlineMinimum) {
-            _registerAirline(_address, _name, contractOwner);
+        if (fundedAirlines.length < MULTI_PARTY_AIRLINE_MIN) {
+            _registerAirline(_address, _name);
         } else {
+            airlines[msg.sender].registerAirlineDuplicateVote = true;
             registerAirlineVoteCount = registerAirlineVoteCount.add(1);
 
             if (registerAirlineVoteCount >= fundedAirlines.length.div(2)) {
-                _registerAirline(_address, _name, contractOwner);
+                _registerAirline(_address, _name);
+                _resetRegisterAirlineDuplicateVotes();
                 registerAirlineVoteCount = 0;
             }
         }
     }
 
-    function _registerAirline(address _address, string memory _name, address _sender) private {
-        require(_sender == contractOwner, "Caller is not contract owner");
-
+    function _registerAirline(address _address, string memory _name) private {
         airlines[_address] = Airline({
             addr: _address,
             name: _name,
@@ -121,6 +130,12 @@ contract FlightSuretyData {
             isOperationalDuplicateVote: false,
             registerAirlineDuplicateVote: false
         });
+    }
+
+    function _resetRegisterAirlineDuplicateVotes() private {
+        for (uint8 i = 0; i < fundedAirlines.length; i++) {
+            airlines[fundedAirlines[i]].registerAirlineDuplicateVote = false;
+        }
     }
 
     function fundAirline(address _address) 
