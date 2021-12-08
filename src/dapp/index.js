@@ -18,7 +18,8 @@ import './flightsurety.css';
 
             if (error || !result) {
                 DOM.elid('airline-wrapper').remove();
-                DOM.elid('flight-form').remove();
+                DOM.elid('flight-select').remove();
+                DOM.elid('flight-insure').remove();
                 DOM.elid('history-wrapper').remove();
             } else {
                 const flightSelector = DOM.elid('flight-number');
@@ -50,20 +51,23 @@ import './flightsurety.css';
             ]);
         });
     
-        DOM.elid('purchase-insurance').addEventListener('click', () => {
+        DOM.elid('purchase-insurance').addEventListener('submit', (event) => {
+            event.preventDefault();
+
             const flight = DOM.elid('flight-number').value;
+            const insurance = DOM.elid('flight-insurance').value;
 
             contract.purchaseFlightInsurance(flight, (error, result) => {
                 const { flight } = result;
-                const { airline, status, number, timestamp } = JSON.parse(flight);
+                const { airline, number, timestamp } = JSON.parse(flight);
                 const { name, address } = airline;
-                
+
                 const flightDetails = `${name} - ${address.slice(0, 5)}...${address.slice(-5)}`;
 
                 displayHistory('Purchase Flight Insurance', new Date(Date.now()), [
                     { label: 'Airline', value: flightDetails },
                     { label: 'Flight', value: number },
-                    { label: 'Status', value: mapStatus(status) },
+                    { label: 'Amount', value: `${insurance} ETH` },
                     { label: 'Time', value: timestamp },
                 ], error);
             });

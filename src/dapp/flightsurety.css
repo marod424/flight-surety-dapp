@@ -38,10 +38,11 @@ label.form {
     margin-right: 20px;
 }
 
-input {
-    margin-right: 30px;
+button {
+    margin-left: 30px; 
 }
 
-button {
-    margin-left: 15px; 
+.units {
+    align-self: center;
+    padding-left: 3px;
 }
