@@ -27,6 +27,7 @@ contract FlightSuretyData {
     address[] private fundedAirlines = new address[](0);
     mapping(address => Airline) private airlines;
     mapping(address => uint256) private funds;
+    mapping(bytes32 => uint256) private insurance;
 
     constructor(address _address) {
         contractOwner = msg.sender;
@@ -157,11 +158,21 @@ contract FlightSuretyData {
         fundedAirlines.push(_address);
     }
 
-   /**
-    * @dev Buy insurance for a flight
-    */   
-    function buy(address airline, string calldata flight, uint256 timestamp) external payable {
-        // TODO
+    function buy(address passenger, string calldata flight) external payable {
+        require(msg.value <= 1 ether, "Required maximum amount is 1 ETH");
+        bytes32 key = getInsuranceKey(passenger, flight);
+        require(insurance[key] <= 0, "Passenger already has insurance for this flight");
+        // TODO check if insurance has already been paid out
+
+        insurance[key] = msg.value;
+    }
+
+    function getInsuranceKey(address passenger, string calldata flight)
+        pure
+        internal
+        returns(bytes32) 
+    {
+        return keccak256(abi.encodePacked(passenger, flight));
     }
 
     /**

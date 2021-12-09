@@ -5,6 +5,7 @@ import './flightsurety.css';
 
 (async() => {
     let contract = new Contract('localhost', () => {
+        
         contract.isOperational((error, result) => {
             display(
                 result ? 'Welcome Passenger' : 'Gracious Patron,', 
@@ -27,7 +28,7 @@ import './flightsurety.css';
 
                 orderedFlights.forEach(flight => {
                     const option = DOM.option({ 
-                        text: `${flight.number} - ${flight.timestamp}`,
+                        text: `${flight.flight} - ${flight.timestamp}`,
                         value: JSON.stringify(flight)
                     });
     
@@ -49,6 +50,8 @@ import './flightsurety.css';
                 { label: 'Name', value: airline.name },
                 { label: 'Address', value: airline.address },
             ]);
+
+            DOM.elid('flight-insurance').value = '';
         });
     
         DOM.elid('purchase-insurance').addEventListener('submit', (event) => {
@@ -57,9 +60,14 @@ import './flightsurety.css';
             const flight = DOM.elid('flight-number').value;
             const insurance = DOM.elid('flight-insurance').value;
 
-            contract.purchaseFlightInsurance(flight, (error, result) => {
-                const { flight } = result;
-                const { airline, number, timestamp } = JSON.parse(flight);
+            const payload = {
+                flight: JSON.parse(flight),
+                amount: insurance
+            };
+
+            contract.purchaseFlightInsurance(payload, (error, result) => {
+                const { amount, flight: flightObj } = result;
+                const { airline, flight: number, timestamp } = flightObj;
                 const { name, address } = airline;
 
                 const flightDetails = `${name} - ${address.slice(0, 5)}...${address.slice(-5)}`;
@@ -67,7 +75,7 @@ import './flightsurety.css';
                 displayHistory('Purchase Flight Insurance', new Date(Date.now()), [
                     { label: 'Airline', value: flightDetails },
                     { label: 'Flight', value: number },
-                    { label: 'Amount', value: `${insurance} ETH` },
+                    { label: 'Amount', value: `${amount} ETH` },
                     { label: 'Time', value: timestamp },
                 ], error);
             });
@@ -120,9 +128,6 @@ function displayAirline(title, results) {
 
     if (airlineWrapperDiv.childElementCount > 0) {
         const fieldValues = airlineWrapperDiv.getElementsByClassName('field-value');
-        console.log(fieldValues)
-        console.log(fieldValues[0])
-        console.log(fieldValues[1])
         fieldValues[0].innerHTML = results[0].value;
         fieldValues[1].innerHTML = results[1].value;
     } else {
@@ -147,7 +152,8 @@ function displayHistory(action, timestamp, results, error) {
     section.appendChild(DOM.h5(`${timestamp}`));
 
     if (error) {
-        row.appendChild(DOM.div({className: 'col-sm-9 field-value'}, String(result.error)));
+        let row = section.appendChild(DOM.div({ className:'row' }));
+        row.appendChild(DOM.div({className: 'col-sm-9 field-value'}, String(error)));
     }
 
     results.map(result => {

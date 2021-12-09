@@ -40,25 +40,10 @@ contract FlightSuretyApp {
         flightSuretyDataProxy.setOperatingStatus(mode);
     }
 
-    function buyInsurance(address airline, string calldata flight, uint256 timestamp) external {
-        flightSuretyDataProxy.buy(airline, flight, timestamp);
+    function buyInsurance(address passenger, string calldata flight) external payable {
+        flightSuretyDataProxy.buy{value: msg.value}(passenger, flight);
     }
  
-   /**
-    * @dev Add an airline to the registration queue
-    */   
-    function registerAirline() external pure returns(bool success, uint256 votes) {
-        // TODO
-        return (success, 0);
-    }
-
-   /**
-    * @dev Register a future flight for insuring.
-    */  
-    function registerFlight() external pure {
-        // TODO
-    }
-    
    /**
     * @dev Called after oracle has updated flight status
     */  

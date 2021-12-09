@@ -15,7 +15,7 @@ export default class Contract {
         this.passengers = [];
         this.flights = [];
     }
-
+    
     initialize(callback) {
         this.web3.eth.getAccounts((error, accts) => {
             let counter = 1;
@@ -31,59 +31,50 @@ export default class Contract {
             }
 
             this.flights = [
-                { 
-                    status: 0,
-                    number: 'A10001', 
+                {
+                    flight: 'A10001', 
                     timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
-                    airline: { name: 'AirOne', address: this.airlines[1] }
+                    airline: { name: 'AirOne', address: this.airlines[0] }
                 },
-                { 
-                    status: 0,
-                    number: 'A10002', 
+                {
+                    flight: 'A10002', 
                     timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
-                    airline: { name: 'AirOne', address: this.airlines[1] }
+                    airline: { name: 'AirOne', address: this.airlines[0] }
                 },
-                { 
-                    status: 0,
-                    number: 'A10003', 
+                {
+                    flight: 'A10003', 
                     timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
-                    airline: { name: 'AirOne', address: this.airlines[1] }
+                    airline: { name: 'AirOne', address: this.airlines[0] }
                 },
-                { 
-                    status: 0,
-                    number: 'dA0001', 
+                {
+                    flight: 'dA0001', 
                     timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
-                    airline: { name: 'dAirline', address: this.airlines[2] }
+                    airline: { name: 'dAirline', address: this.airlines[1] }
                 },
-                { 
-                    status: 0,
-                    number: 'dA0020', 
+                {
+                    flight: 'dA0020', 
                     timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
-                    airline: { name: 'dAirline', address: this.airlines[2] }
+                    airline: { name: 'dAirline', address: this.airlines[1] }
                 },
-                { 
-                    status: 0,
-                    number: 'dA0300', 
+                {
+                    flight: 'dA0300', 
                     timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
-                    airline: { name: 'dAirline', address: this.airlines[2] }
+                    airline: { name: 'dAirline', address: this.airlines[1] }
                 },
-                { 
-                    status: 0,
-                    number: 'DAO001', 
+                {
+                    flight: 'DAO001', 
                     timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
-                    airline: { name: 'DAirlineO', address: this.airlines[3] }
+                    airline: { name: 'DAirlineO', address: this.airlines[2] }
                 },
-                { 
-                    status: 0,
-                    number: 'DAO010', 
+                {
+                    flight: 'DAO010', 
                     timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
-                    airline: { name: 'DAirlineO', address: this.airlines[3] }
+                    airline: { name: 'DAirlineO', address: this.airlines[2] }
                 },
-                { 
-                    status: 0,
-                    number: 'DAO011', 
+                {
+                    flight: 'DAO011', 
                     timestamp: this._randomDate(new Date(2020, 0, 1), new Date()), 
-                    airline: { name: 'DAirlineO', address: this.airlines[3] }
+                    airline: { name: 'DAirlineO', address: this.airlines[2] }
                 },
             ];
 
@@ -99,17 +90,15 @@ export default class Contract {
             .call({ from: self.owner}, callback);
     }
 
-    purchaseFlightInsurance(flight, callback) {
+    purchaseFlightInsurance(payload, callback) {
         let self = this;
-        let payload = {
-            airline: self.airlines[0],
-            flight,
-            timestamp: Math.floor(Date.now() / 1000)
-        };
+
+        const { amount, flight } = payload;
+        const value = self.web3.utils.toWei(amount);
 
         self.flightSuretyApp.methods
-            .buyInsurance(payload.airline, payload.flight, payload.timestamp)
-            .send({ from: self.owner}, error => callback(error, payload));
+            .buyInsurance(flight.airline.address, flight)
+            .send({ from: self.owner, value }, error => callback(error, payload));
     }
 
     fetchFlightStatus(flight, callback) {
