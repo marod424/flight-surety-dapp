@@ -36,10 +36,6 @@ contract FlightSuretyApp {
         return flightSuretyDataProxy.isOperational();
     }
 
-    function setOperatingStatus(bool mode) external {
-        flightSuretyDataProxy.setOperatingStatus(mode);
-    }
-
     function buyInsurance(address passenger, string calldata flight) external payable {
         flightSuretyDataProxy.buy{value: msg.value}(passenger, flight);
     }
@@ -55,11 +51,14 @@ contract FlightSuretyApp {
         emit OracleRequest(index, flight);
     } 
  
-   /**
-    * @dev Called after oracle has updated flight status
-    */  
-    function processFlightStatus(string memory flight, uint8 statusCode) internal pure {
-        // TODO
+    function processFlightStatus(string memory flight, uint8 statusCode) internal {
+        if (statusCode == STATUS_CODE_LATE_AIRLINE) {
+            flightSuretyDataProxy.creditInsurees(flight);
+        }
+    }
+
+    function withdraw(address passenger, string memory flight, uint256 amount) internal {
+        flightSuretyDataProxy.pay(passenger, flight, amount);
     }
 
 // region ORACLE MANAGEMENT

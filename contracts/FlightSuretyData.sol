@@ -29,6 +29,13 @@ contract FlightSuretyData {
     mapping(address => uint256) private funds;
     mapping(bytes32 => uint256) private insurance;
 
+    struct InsurerInfo {
+        bool isPaid;
+        address[] insurees;
+    }
+
+    mapping(bytes32 => InsurerInfo) private insurers;
+
     constructor(address _address) {
         contractOwner = msg.sender;
         _registerAirline(_address, "AirOne");
@@ -160,33 +167,49 @@ contract FlightSuretyData {
 
     function buy(address passenger, string calldata flight) external payable {
         require(msg.value <= 1 ether, "Required maximum amount is 1 ETH");
-        bytes32 key = getInsuranceKey(passenger, flight);
-        require(insurance[key] <= 0, "Passenger already has insurance for this flight");
-        // TODO check if insurance has already been paid out
 
-        insurance[key] = msg.value;
+        bytes32 insuranceKey = keccak256(abi.encodePacked(passenger, flight));
+        require(insurance[insuranceKey] <= 0, "Passenger already has insurance for this flight");
+        
+        bytes32 key = keccak256(abi.encodePacked(flight));
+        require(!insurers[key].isPaid, "Insurance already paid");
+
+        InsurerInfo storage insurerInfo = insurers[key];
+        insurerInfo.isPaid = false;
+        insurerInfo.insurees.push(passenger);
+
+        insurance[insuranceKey] = msg.value;
     }
 
-    function getInsuranceKey(address passenger, string calldata flight)
-        pure
-        internal
-        returns(bytes32) 
-    {
-        return keccak256(abi.encodePacked(passenger, flight));
-    }
+    function creditInsurees(string calldata flight) external {
+        bytes32 key = keccak256(abi.encodePacked(flight));
+        require(!insurers[key].isPaid, "Insurance already paid");
 
-    /**
-     *  @dev Credits payouts to insurees
-    */
-    function creditInsurees() external pure {
-        // TODO
+        InsurerInfo storage insurerInfo = insurers[key];
+        insurerInfo.isPaid = true;
+
+        address[] memory passengers = insurerInfo.insurees;
+
+        for (uint256 i = 0; i < passengers.length; i++) {
+            address passenger = passengers[i];
+            bytes32 insuranceKey = keccak256(abi.encodePacked(passenger, flight));
+
+            uint256 insuredAmount = insurance[insuranceKey];
+            uint256 payout = insuredAmount.mul(15).div(10);
+
+            insurance[insuranceKey] = payout;
+        }
     }
     
-    /**
-     *  @dev Transfers eligible payout funds to insuree
-    */
-    function pay() external pure {
-        // TODO
+    function pay(address passenger, string calldata flight, uint256 amount) external payable {
+        bytes32 key = keccak256(abi.encodePacked(passenger, flight));
+        uint256 payout = insurance[key];
+
+        require(payout >= amount, "Amount exceeds payout available");
+        
+        insurance[key] = 0;
+        payable(msg.sender).transfer(amount);
+        insurance[key] = payout.sub(amount);
     }
 
     function fund(address owner) public payable {
