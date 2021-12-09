@@ -5,14 +5,85 @@ import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
 
 let config = Config['localhost'];
 let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
-
-web3.eth.defaultAccount = web3.eth.accounts[0];
-
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+let oracles = [];
 
-flightSuretyApp.events.OracleRequest({fromBlock: 0}, function (error, event) {
-    if (error) console.log(error);
-    console.log(event);
+web3.eth.handleRevert = true;
+
+web3.eth.getAccounts()
+  .then(accounts => {
+    web3.eth.defaultAccount = web3.eth.accounts[0];
+
+    flightSuretyApp.methods.REGISTRATION_FEE().call()
+      .then(fee => {
+        accounts.forEach(account => {
+          // Duplicating these calls to simulate 20+ oracles
+          // since Truffle only provides 10 accounts as default
+          for (let i = 0; i < 5; i++) {
+            flightSuretyApp.methods.registerOracle()
+              .send({ from: account, value: fee, gas: 4712388, gasPrice: 100000000000 })
+              .then(() => {
+                flightSuretyApp.methods.getMyIndexes()
+                  .call({ from: account })
+                  .then(result => {
+                    console.log(`Oracle Registered: ${result[0]}, ${result[1]}, ${result[2]}`);
+                    oracles.push({ account, indexes: result });
+                  })
+                  .catch(error => console.log('Get Indexes Error:', error));
+              })
+              .catch(error => console.log('Register Oracle Error:', error));
+          }
+        });
+      })
+      .catch(error => console.log('Call REGISTRATION_FEE Error:', error));
+  })
+  .catch(error => console.log('Get accounts Error:', error));
+
+
+flightSuretyApp.events.OracleRequest({fromBlock: "latest"}, function (error, event) {
+  if (error) console.log('error', error);
+
+  if (event && event.returnValues) {
+    const { index, flight } = event.returnValues;
+
+    oracles.filter(o => o.indexes.includes(index)).forEach(oracle => {
+      const { account } = oracle;
+      const code = Math.floor(Math.random()*5 + 1)*10;
+
+      flightSuretyApp.methods.submitOracleResponse(index, flight, code)
+        .send({ from: account })
+        .then(() => {})
+        .catch(error => console.log('Submit Oracle Response Error', error));
+    });
+  }
+});
+
+flightSuretyApp.events.OracleReport({fromBlock: "latest"}, function (error, event) {
+  if (error) console.log('error', error);
+
+  if (event && event.returnValues) {
+    const { flight, status } = event.returnValues;
+    const parsedFlight = JSON.parse(flight);
+
+    console.log(`Oracle report for flight ${parsedFlight.flight}: status ${status}`);
+  }
+});
+
+flightSuretyApp.events.FlightStatusInfo({fromBlock: "latest"}, function (error, event) {
+  if (error) console.log('error', error);
+
+  if (event && event.returnValues) {
+    const { flight, status } = event.returnValues;
+    const parsedFlight = JSON.parse(flight);
+    const statusMap = {
+      10: 'On Time',
+      20: 'Late Airline',
+      30: 'Late Weather',
+      40: 'Late Technical',
+      50: 'Late Other'
+    };
+    console.log(`Oracle consensus for flight ${parsedFlight.flight}: status ${status} - ${statusMap[status]}`);
+  }
 });
 
 const app = express();

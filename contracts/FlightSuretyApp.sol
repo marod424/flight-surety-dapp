@@ -43,38 +43,24 @@ contract FlightSuretyApp {
     function buyInsurance(address passenger, string calldata flight) external payable {
         flightSuretyDataProxy.buy{value: msg.value}(passenger, flight);
     }
- 
-   /**
-    * @dev Called after oracle has updated flight status
-    */  
-    function processFlightStatus(
-        address airline,
-        string memory flight,
-        uint256 timestamp,
-        uint8 statusCode
-    )
-        internal
-        pure
-    {
-        // TODO
-    }
 
-    /**
-    * @dev Generate a request for oracles to fetch flight information
-    */  
-    function fetchFlightStatus(address airline, string calldata flight, uint256 timestamp)
-        external
-    {
+    function fetchFlightStatus(string calldata flight) external {
         uint8 index = getRandomIndex(msg.sender);
-        bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
+        bytes32 key = keccak256(abi.encodePacked(index, flight));
 
         ResponseInfo storage oracleResponseInfo = oracleResponses[key];
         oracleResponseInfo.requester = msg.sender;
         oracleResponseInfo.isOpen = true;
 
-        emit OracleRequest(index, airline, flight, timestamp);
+        emit OracleRequest(index, flight);
     } 
-
+ 
+   /**
+    * @dev Called after oracle has updated flight status
+    */  
+    function processFlightStatus(string memory flight, uint8 statusCode) internal pure {
+        // TODO
+    }
 
 // region ORACLE MANAGEMENT
 
@@ -109,14 +95,14 @@ contract FlightSuretyApp {
     mapping(bytes32 => ResponseInfo) private oracleResponses;
 
     // Event fired each time an oracle submits a response
-    event FlightStatusInfo(address airline, string flight, uint256 timestamp, uint8 status);
+    event FlightStatusInfo(string flight, uint8 status);
 
-    event OracleReport(address airline, string flight, uint256 timestamp, uint8 status);
+    event OracleReport(string flight, uint8 status);
 
     // Event fired when flight status request is submitted
     // Oracles track this and if they have a matching index
     // they fetch data and submit a response
-    event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
+    event OracleRequest(uint8 index, string flight);
 
     // Register an oracle with the contract
     function registerOracle() external payable {
@@ -137,14 +123,8 @@ contract FlightSuretyApp {
     // For the response to be accepted, there must be a pending request that is open
     // and matches one of the three Indexes randomly assigned to the oracle at the
     // time of registration (i.e. uninvited oracles are not welcome)
-    function submitOracleResponse(
-        uint8 index,
-        address airline,
-        string calldata flight,
-        uint256 timestamp,
-        uint8 statusCode
-    )
-         external
+    function submitOracleResponse(uint8 index, string calldata flight, uint8 statusCode)
+        external
     {
         require(
             oracles[msg.sender].indexes[0] == index || 
@@ -153,20 +133,20 @@ contract FlightSuretyApp {
             "Index does not match oracle request"
         );
 
-        bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp)); 
-        require(oracleResponses[key].isOpen, "Flight or timestamp do not match oracle request");
+        bytes32 key = keccak256(abi.encodePacked(index, flight)); 
+        require(oracleResponses[key].isOpen, "Flight does not match oracle request");
 
         oracleResponses[key].responses[statusCode].push(msg.sender);
 
         // Information isn't considered verified until at least MIN_RESPONSES
         // oracles respond with the *** same *** information
-        emit OracleReport(airline, flight, timestamp, statusCode);
+        emit OracleReport(flight, statusCode);
 
         if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
-            emit FlightStatusInfo(airline, flight, timestamp, statusCode);
+            emit FlightStatusInfo(flight, statusCode);
 
             // Handle flight status as appropriate
-            processFlightStatus(airline, flight, timestamp, statusCode);
+            processFlightStatus(flight, statusCode);
         }
     }
 

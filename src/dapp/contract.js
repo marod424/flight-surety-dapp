@@ -110,7 +110,7 @@ export default class Contract {
         };
 
         self.flightSuretyApp.methods
-            .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
+            .fetchFlightStatus(payload.flight)
             .send({ from: self.owner}, error => callback(error, payload));
     }
 
