@@ -98,6 +98,33 @@ import './flightsurety.css';
             });
         });
 
+        DOM.elid('withdraw-payout').addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const flight = DOM.elid('flight-number').value;
+            const payout = DOM.elid('insurance-payout').value;
+
+            const payload = {
+                flight: JSON.parse(flight),
+                amount: payout
+            };
+
+            contract.withdrawFlightInsurance(payload, (error, result) => {
+                const { amount, flight: flightObj } = result;
+                const { airline, flight: number, timestamp } = flightObj;
+                const { name, address } = airline;
+
+                const flightDetails = `${name} - ${address.slice(0, 5)}...${address.slice(-5)}`;
+
+                displayHistory('Withdraw Insurance Payout', new Date(Date.now()), [
+                    { label: 'Airline', value: flightDetails },
+                    { label: 'Flight', value: number },
+                    { label: 'Payout', value: `${amount} ETH` },
+                    { label: 'Time', value: timestamp },
+                ], error);
+            });
+        });
+
         DOM.elid('fetch-status').addEventListener('click', () => {
             const flight = DOM.elid('flight-number').value;
             

@@ -7,25 +7,11 @@ import "./IFlightSuretyData.sol";
 contract FlightSuretyApp {
     using SafeMath for uint256;
 
-    uint8 private constant STATUS_CODE_UNKNOWN = 0;
-    uint8 private constant STATUS_CODE_ON_TIME = 10;
     uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
-    uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
-    uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
-    uint8 private constant STATUS_CODE_LATE_OTHER = 50;
-
     address private contractOwner;
-    
-    IFlightSuretyData flightSuretyDataProxy;
-
-    struct Flight {
-        bool isRegistered;
-        uint8 statusCode;
-        uint256 updatedTimestamp;        
-        address airline;
-    }
-
     mapping(bytes32 => uint8) private flightStatus;
+
+    IFlightSuretyData flightSuretyDataProxy;
 
     constructor(address dataContract) {
         contractOwner = msg.sender;
@@ -57,7 +43,7 @@ contract FlightSuretyApp {
         }
     }
 
-    function withdraw(address passenger, string memory flight, uint256 amount) internal {
+    function withdraw(address passenger, string memory flight, uint256 amount) external {
         flightSuretyDataProxy.pay(passenger, flight, amount);
     }
 
@@ -148,15 +134,6 @@ contract FlightSuretyApp {
 
             processFlightStatus(flight, statusCode);
         }
-    }
-
-
-    function getFlightKey(address airline, string calldata flight, uint256 timestamp)
-        pure
-        internal
-        returns(bytes32) 
-    {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 
     // Returns array of three non-duplicating integers from 0-9

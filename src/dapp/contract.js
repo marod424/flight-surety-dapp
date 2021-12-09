@@ -96,10 +96,24 @@ export default class Contract {
 
         const { amount, flight } = payload;
         const value = self.web3.utils.toWei(amount);
+        const passenger = self.owner;
 
         self.flightSuretyApp.methods
-            .buyInsurance(flight.airline.address, flight)
-            .send({ from: self.owner, value }, error => callback(error, payload));
+            .buyInsurance(passenger, flight)
+            .send({ from: passenger, value, gas: 4712388, gasPrice: 100000000000 }, error => callback(error, payload));
+    }
+
+    withdrawFlightInsurance(payload, callback) {
+        let self = this;
+
+        console.log(payload)
+        const { amount, flight } = payload;
+        const value = self.web3.utils.toWei(amount);
+        const passenger = self.owner;
+
+        self.flightSuretyApp.methods
+            .withdraw(passenger, flight, value)
+            .send({ from: passenger, gas: 4712388, gasPrice: 100000000000 }, error => callback(error, payload));
     }
 
     fetchFlightStatus(flight, callback) {
@@ -116,7 +130,6 @@ export default class Contract {
         self.flightSuretyApp.events
             .FlightStatusInfo({ fromBlock: "latest" }, (error, event) => callback(error, event));
     }
-
 
     _randomDate(start, end) {
         return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
