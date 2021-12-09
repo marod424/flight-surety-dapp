@@ -75,16 +75,11 @@ import './flightsurety.css';
             event.preventDefault();
 
             const flight = DOM.elid('flight-number').value;
-            const insurance = DOM.elid('flight-insurance').value;
+            const amount = DOM.elid('flight-insurance').value;
 
-            const payload = {
-                flight: JSON.parse(flight),
-                amount: insurance
-            };
-
-            contract.purchaseFlightInsurance(payload, (error, result) => {
-                const { amount, flight: flightObj } = result;
-                const { airline, flight: number, timestamp } = flightObj;
+            contract.purchaseFlightInsurance({ flight, amount }, (error, result) => {
+                const { amount, flight: flightString } = result;
+                const { airline, flight: number, timestamp } = JSON.parse(flightString);
                 const { name, address } = airline;
 
                 const flightDetails = `${name} - ${address.slice(0, 5)}...${address.slice(-5)}`;
@@ -102,16 +97,11 @@ import './flightsurety.css';
             event.preventDefault();
 
             const flight = DOM.elid('flight-number').value;
-            const payout = DOM.elid('insurance-payout').value;
+            const amount = DOM.elid('insurance-payout').value;
 
-            const payload = {
-                flight: JSON.parse(flight),
-                amount: payout
-            };
-
-            contract.withdrawFlightInsurance(payload, (error, result) => {
+            contract.withdrawFlightInsurance({flight, amount }, (error, result) => {
                 const { amount, flight: flightObj } = result;
-                const { airline, flight: number, timestamp } = flightObj;
+                const { airline, flight: number, timestamp } = JSON.parse(flightObj);
                 const { name, address } = airline;
 
                 const flightDetails = `${name} - ${address.slice(0, 5)}...${address.slice(-5)}`;

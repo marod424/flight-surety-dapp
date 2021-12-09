@@ -106,7 +106,6 @@ export default class Contract {
     withdrawFlightInsurance(payload, callback) {
         let self = this;
 
-        console.log(payload)
         const { amount, flight } = payload;
         const value = self.web3.utils.toWei(amount);
         const passenger = self.owner;

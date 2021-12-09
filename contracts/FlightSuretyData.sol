@@ -208,7 +208,7 @@ contract FlightSuretyData {
         require(payout >= amount, "Amount exceeds payout available");
         
         insurance[key] = 0;
-        payable(msg.sender).transfer(amount);
+        payable(passenger).transfer(amount);
         insurance[key] = payout.sub(amount);
     }
 

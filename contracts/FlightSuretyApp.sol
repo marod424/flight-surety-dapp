@@ -37,13 +37,13 @@ contract FlightSuretyApp {
         emit OracleRequest(index, flight);
     } 
  
-    function processFlightStatus(string memory flight, uint8 statusCode) internal {
+    function processFlightStatus(string calldata flight, uint8 statusCode) internal {
         if (statusCode == STATUS_CODE_LATE_AIRLINE) {
             flightSuretyDataProxy.creditInsurees(flight);
         }
     }
 
-    function withdraw(address passenger, string memory flight, uint256 amount) external {
+    function withdraw(address passenger, string calldata flight, uint256 amount) external {
         flightSuretyDataProxy.pay(passenger, flight, amount);
     }
 
