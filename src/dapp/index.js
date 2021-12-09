@@ -39,6 +39,23 @@ import './flightsurety.css';
                     { label: 'Name', value: orderedFlights[0].airline.name },
                     { label: 'Address', value: orderedFlights[0].airline.address },
                 ]);
+
+                contract.listenForFlightStatusInfo((error, event) => {
+                    if (event && event.returnValues) {
+                        const { status, flight } = event.returnValues;
+                        const { flight: number, timestamp, airline } = JSON.parse(flight);
+                        const { name, address } = airline;
+                        
+                        const flightDetails = `${name} - ${address.slice(0, 5)}...${address.slice(-5)}`;
+        
+                        displayHistory('Flight Status Info', new Date(Date.now()), [
+                            { label: 'Airline', value: flightDetails },
+                            { label: 'Flight', value: number },
+                            { label: 'Status', value: mapStatus(+status) },
+                            { label: 'Time', value: timestamp },
+                        ], error);
+                    }
+                });
             }
         });
 
@@ -85,16 +102,15 @@ import './flightsurety.css';
             const flight = DOM.elid('flight-number').value;
             
             contract.fetchFlightStatus(flight, (error, result) => {
-                const { flight } = result;
-                const { airline, status, number, timestamp } = JSON.parse(flight);
+                const { flight, airline, timestamp } = JSON.parse(result);
                 const { name, address } = airline;
                 
                 const flightDetails = `${name} - ${address.slice(0, 5)}...${address.slice(-5)}`;
 
                 displayHistory('Fetch Flight Status', new Date(Date.now()), [
                     { label: 'Airline', value: flightDetails },
-                    { label: 'Flight', value: number },
-                    { label: 'Status', value: mapStatus(status) },
+                    { label: 'Flight', value: flight },
+                    { label: 'Status', value: 'Pending' },
                     { label: 'Time', value: timestamp },
                 ], error);
             });

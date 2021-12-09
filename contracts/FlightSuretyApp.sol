@@ -25,7 +25,7 @@ contract FlightSuretyApp {
         address airline;
     }
 
-    mapping(bytes32 => Flight) private flights;
+    mapping(bytes32 => uint8) private flightStatus;
 
     constructor(address dataContract) {
         contractOwner = msg.sender;
@@ -142,10 +142,11 @@ contract FlightSuretyApp {
         // oracles respond with the *** same *** information
         emit OracleReport(flight, statusCode);
 
-        if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
+        if (flightStatus[key] == 0 && oracleResponses[key].responses[statusCode].length == MIN_RESPONSES) {
+            flightStatus[key] = statusCode;
+
             emit FlightStatusInfo(flight, statusCode);
 
-            // Handle flight status as appropriate
             processFlightStatus(flight, statusCode);
         }
     }

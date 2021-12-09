@@ -7,7 +7,8 @@ export default class Contract {
     constructor(network, callback) {
         let config = Config[network];
 
-        this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+        // this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+        this.web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
         this.initialize(callback);
         this.owner = null;
@@ -103,16 +104,19 @@ export default class Contract {
 
     fetchFlightStatus(flight, callback) {
         let self = this;
-        let payload = {
-            airline: self.airlines[0],
-            flight,
-            timestamp: Math.floor(Date.now() / 1000)
-        };
 
         self.flightSuretyApp.methods
-            .fetchFlightStatus(payload.flight)
-            .send({ from: self.owner}, error => callback(error, payload));
+            .fetchFlightStatus(flight)
+            .send({ from: self.owner}, error => callback(error, flight));
     }
+
+    listenForFlightStatusInfo(callback) {
+        let self = this;
+
+        self.flightSuretyApp.events
+            .FlightStatusInfo({ fromBlock: "latest" }, (error, event) => callback(error, event));
+    }
+
 
     _randomDate(start, end) {
         return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
