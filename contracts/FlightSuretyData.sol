@@ -11,7 +11,6 @@ contract FlightSuretyData {
     address private contractOwner;
     bool private operational = true;
     uint256 private isOperationalVoteCount = 0;
-    mapping(address => uint256) private authorizedContracts;
     bool private testingMode = false;
 
     struct Airline {
@@ -61,8 +60,9 @@ contract FlightSuretyData {
         _;
     }
 
-    function authorizeContract(address contractAddress) external requireContractOwner {
-        authorizedContracts[contractAddress] = 1;
+    function setTestingMode(bool mode) external requireContractOwner {
+        require(mode != testingMode, "New mode must be different from existing mode");
+        testingMode = mode;
     }
     
     function isOperational() external view returns(bool) {
@@ -75,11 +75,6 @@ contract FlightSuretyData {
 
     function isFundedAirline(address _address) external view returns(bool) {
         return airlines[_address].isFunded;
-    }
-
-    function setTestingMode(bool mode) external requireContractOwner {
-        require(mode != testingMode, "New mode must be different from existing mode");
-        testingMode = mode;
     }
 
     function setOperatingStatus(bool status) 
@@ -165,7 +160,7 @@ contract FlightSuretyData {
         fundedAirlines.push(_address);
     }
 
-    function buy(address passenger, string calldata flight) external payable {
+    function buy(address passenger, string calldata flight) external payable requireIsOperational {
         require(msg.value <= 1 ether, "Required maximum amount is 1 ETH");
 
         bytes32 insuranceKey = keccak256(abi.encodePacked(passenger, flight));
@@ -181,7 +176,7 @@ contract FlightSuretyData {
         insurance[insuranceKey] = msg.value;
     }
 
-    function creditInsurees(string calldata flight) external {
+    function creditInsurees(string calldata flight) external requireIsOperational {
         bytes32 key = keccak256(abi.encodePacked(flight));
         require(!insurers[key].isPaid, "Insurance already paid");
 
@@ -201,7 +196,11 @@ contract FlightSuretyData {
         }
     }
     
-    function pay(address passenger, string calldata flight, uint256 amount) external payable {
+    function pay(address passenger, string calldata flight, uint256 amount) 
+        external 
+        payable 
+        requireIsOperational 
+    {
         bytes32 key = keccak256(abi.encodePacked(passenger, flight));
         uint256 payout = insurance[key];
 
@@ -212,7 +211,7 @@ contract FlightSuretyData {
         insurance[key] = payout.sub(amount);
     }
 
-    function fund(address owner) public payable {
+    function fund(address owner) public payable requireIsOperational {
         uint256 currentFunds = funds[owner];
         uint256 totalFunds = currentFunds.add(msg.value);
 

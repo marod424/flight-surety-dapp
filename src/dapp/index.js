@@ -21,6 +21,7 @@ import './flightsurety.css';
                 DOM.elid('airline-wrapper').remove();
                 DOM.elid('flight-select').remove();
                 DOM.elid('flight-insure').remove();
+                DOM.elid('flight-withdraw').remove();
                 DOM.elid('history-wrapper').remove();
             } else {
                 const flightSelector = DOM.elid('flight-number');

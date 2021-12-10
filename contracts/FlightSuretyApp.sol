@@ -8,13 +8,11 @@ contract FlightSuretyApp {
     using SafeMath for uint256;
 
     uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
-    address private contractOwner;
     mapping(bytes32 => uint8) private flightStatus;
 
     IFlightSuretyData flightSuretyDataProxy;
 
     constructor(address dataContract) {
-        contractOwner = msg.sender;
         flightSuretyDataProxy = IFlightSuretyData(dataContract);
     }
 
