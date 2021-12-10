@@ -55,8 +55,8 @@ flightSuretyApp.events.OracleRequest({fromBlock: "latest"}, function (error, eve
 
     oracles.filter(o => o.indexes.includes(index)).forEach(oracle => {
       const { account } = oracle;
-      // const code = Math.floor(Math.random()*5 + 1)*10;
-      const code = 20; // good for force testing insurance payout
+      const code = Math.floor(Math.random()*5 + 1)*10;
+      // const code = 20; // good for force testing insurance payout
 
       flightSuretyApp.methods.submitOracleResponse(index, flight, code)
         .send({ from: account, gas: 4712388, gasPrice: 100000000000 })
