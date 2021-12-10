@@ -2,10 +2,12 @@ import Web3 from 'web3';
 import express from 'express';
 import Config from './config.json';
 import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
+import FlightSuretyData from '../../build/contracts/FlightSuretyData.json';
 
 let config = Config['localhost'];
 let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
+let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
 let oracles = [];
 
 web3.eth.handleRevert = true;
@@ -13,6 +15,11 @@ web3.eth.handleRevert = true;
 web3.eth.getAccounts()
   .then(accounts => {
     web3.eth.defaultAccount = web3.eth.accounts[0];
+
+    flightSuretyData.methods.fund(accounts[0])
+      .send({ from: accounts[0], value: 10000000000000000000, gas: 4712388, gasPrice: 100000000000 })
+      .then(() => console.log('Account funded'))
+      .catch(error => console.log('Error funding account', error));
 
     flightSuretyApp.methods.REGISTRATION_FEE().call()
       .then(fee => {

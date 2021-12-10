@@ -106,7 +106,7 @@ import './flightsurety.css';
                 const { name, address } = airline;
 
                 const flightDetails = `${name} - ${address.slice(0, 5)}...${address.slice(-5)}`;
-
+                
                 displayHistory('Withdraw Insurance Payout', new Date(Date.now()), [
                     { label: 'Airline', value: flightDetails },
                     { label: 'Flight', value: number },

@@ -196,7 +196,7 @@ contract FlightSuretyData {
         }
     }
     
-    function pay(address passenger, string calldata flight, uint256 amount) 
+    function pay(address payable passenger, string calldata flight, uint256 amount) 
         external 
         payable 
         requireIsOperational 
@@ -207,7 +207,7 @@ contract FlightSuretyData {
         require(payout >= amount, "Amount exceeds payout available");
         
         insurance[key] = 0;
-        payable(passenger).transfer(amount);
+        passenger.transfer(amount);
         insurance[key] = payout.sub(amount);
     }
 

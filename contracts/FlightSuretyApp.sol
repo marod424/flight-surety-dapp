@@ -20,10 +20,6 @@ contract FlightSuretyApp {
         return flightSuretyDataProxy.isOperational();
     }
 
-    function buyInsurance(address passenger, string calldata flight) external payable {
-        flightSuretyDataProxy.buy{value: msg.value}(passenger, flight);
-    }
-
     function fetchFlightStatus(string calldata flight) external {
         uint8 index = getRandomIndex(msg.sender);
         bytes32 key = keccak256(abi.encodePacked(index, flight));
@@ -39,6 +35,10 @@ contract FlightSuretyApp {
         if (statusCode == STATUS_CODE_LATE_AIRLINE) {
             flightSuretyDataProxy.creditInsurees(flight);
         }
+    }
+
+    function buyInsurance(address passenger, string calldata flight) external payable {
+        flightSuretyDataProxy.buy{value: msg.value}(passenger, flight);
     }
 
     function withdraw(address passenger, string calldata flight, uint256 amount) external {
